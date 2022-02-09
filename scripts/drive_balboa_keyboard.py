@@ -34,8 +34,6 @@ def drive(lmotor, rmotor):
 
     return velo
 
-    pass
-
 
 def listener():
 
