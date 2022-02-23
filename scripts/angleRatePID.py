@@ -8,8 +8,10 @@ from balboa_core.msg import balboaLL
 from balboa_core.msg import balboaMotorSpeeds
 
 def callback(data):
-    k_p = 0.00003
-    k_d = 0.00001
+
+    global k_p 
+    global k_d 
+    global k_i
     global pub
     global running
     global angle_prev
@@ -23,6 +25,7 @@ def callback(data):
     global t_cur
     global angular_rate
     global speed
+    
     vel_msg = balboaMotorSpeeds()
     vel_msg.header.stamp = rospy.Time.now()
     
@@ -108,6 +111,26 @@ def anglePID():
     rospy.init_node('angleRatePID')
     rospy.Subscriber('balboaLL', balboaLL, callback)
 
+    global k_p 
+    global k_d 
+    global k_i
+
+    # set PID constants from parameters
+    if rospy.has_param('~rCtrl/P'):
+        k_p = rospy.get_param('~rCtrl/P')
+    else:
+        k_p = 0.00003
+    if rospy.has_param('~rCtrl/D'):
+        k_d = rospy.get_param('~rCtrl/D')
+    else:
+        k_d = 0.00001
+    if rospy.has_param('~rCtrl/I'):
+        k_i = rospy.get_param('~rCtrl/I')
+    else:
+        k_i = 0
+    print(k_p)
+    print(k_d)
+    print(k_i)
     if count == 0 :
         running = False
         count+=1
