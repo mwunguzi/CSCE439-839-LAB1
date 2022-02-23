@@ -27,7 +27,7 @@ def callback(data):
     rospy.loginfo('Running Flag set to: %s', running)
 
     if running == False: # Only run if not currently moving towards a target
-        pos_tar = float(raw_input("Input target distance (ft): "))*1572 # 2156 encoder counts/ft
+        pos_tar = float(raw_input("Input target distance (ft): "))*1572 #1572  encoder counts/ft
         running = True
         encoder_prev = abs((data.distanceLeft + data.distanceRight)/2)
         pos_curr = 0

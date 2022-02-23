@@ -24,7 +24,7 @@ def callback(data):
     vel_msg.header.stamp = rospy.Time.now()
     
     if running == False: # Only run if not currently moving towards a target
-        pos_tar = float(raw_input("Input target distance (ft): "))*2156 # 2156 encoder counts/ft
+        pos_tar = float(raw_input("Input target distance (ft): "))*1572 # 1572 encoder counts/ft
         running = True
         pos_init = (data.distanceLeft + data.distanceRight)/2
         e_prev = pos_tar
@@ -35,11 +35,11 @@ def callback(data):
     pos_cur = (data.distanceLeft + data.distanceRight)/2 - pos_init
     t_cur = float(data.header.stamp.secs%1000000)+float(data.header.stamp.nsecs)*10**(-9)
     
-    if pos_tar - 180 <= pos_cur and pos_cur <= pos_tar + 180: # within 1" of target
+    if pos_tar - 262 <= pos_cur and pos_cur <= pos_tar + 262: # within 2" of target
         if end_flag == False:
             t_end = t_cur
             end_flag = True
-        elif t_cur - t_end >= 1: # robot has been within 1" of target for 1 sec
+        elif t_cur - t_end >= 1: # robot has been within 2" of target for 1 sec
             vel_msg.left = vel_msg.right = 0
             rospy.loginfo(vel_msg)
             pub.publish(vel_msg)
@@ -54,12 +54,11 @@ def callback(data):
     i += e*dt # integral of error
 
     speed = int(k_p*e + k_d*d + k_i*i) # PID control
-    # Cap speed at +/- 30
-    if speed > 30:
-        speed = 30
-    elif speed <-30:
-        speed = -30
-
+    # Cap speed at +/- 10
+    if speed > 10:
+        speed = 10
+    elif speed <-10:
+        speed = -10
     vel_msg.left = vel_msg.right = speed
     rospy.loginfo(vel_msg)
     pub.publish(vel_msg)
