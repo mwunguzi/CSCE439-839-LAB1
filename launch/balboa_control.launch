@@ -2,9 +2,29 @@
 
   <node pkg="balboa_core" name="balboa_serial" type="balboa_serial.py" output="screen"/>
   
-  <node pkg="balboa_core" name="distanccePID" type="PID_test.py" output="screen">
+  <node pkg="turtlesim" name="teleop_key" type="turtle_teleop_key">
+    <remap from="turtle1/cmd_vel" to="PID_cmd_vel"/>
+  </node>
+  
+  <node pkg="lab1" name="balboa_teleop" type="balboa_teleop.py"/>
+  <node pkg="lab1" name="teleopTranslation" type="teleopTranslation.py" output="screen"/>
+  <node pkg="lab1" name="inputControl" type="inputControl.py" output="screen"/>
+
+  <node pkg="lab1" name="distancePID" type="distancePID.py">
     <param name="rCtrl/P" type="double" value="0.009"/>
-    <param name="rCtrl/I" type="double" value="0.00"/>
+    <param name="rCtrl/I" type="double" value="0.0"/>
+    <param name="rCtrl/D" type="double" value="0.0"/>
+  </node>
+
+  <node pkg="lab1" name="anglePID" type="anglePID.py">
+    <param name="rCtrl/P" type="double" value="0.003"/>
+    <param name="rCtrl/I" type="double" value="0.0"/>
+    <param name="rCtrl/D" type="double" value="0.00001"/>
+  </node>
+
+  <node pkg="lab1" name="angleRatePID" type="angleRatePID.py">
+    <param name="rCtrl/P" type="double" value="0.0001"/>
+    <param name="rCtrl/I" type="double" value="0.0"/>
     <param name="rCtrl/D" type="double" value="0.0"/>
   </node>
 

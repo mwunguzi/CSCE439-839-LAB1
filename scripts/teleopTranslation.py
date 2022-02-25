@@ -1,33 +1,30 @@
 #!/usr/bin/env python
 import rospy
-import threading # Needed for Timer
 from geometry_msgs.msg import Twist
-from std_msgs.msg import UInt8
 from std_msgs.msg import Int16
 from balboa_core.msg import balboaLL
 from balboa_core.msg import balboaMotorSpeeds
 
 
 def callback(data):
-    global pub1 #for publishing on the distance PID topic
-    global pub2 #for publishing on the angle PID topic
-    global telekey #variable to store the pressed key
+    global pos_pub #for publishing on the distance PID topic
+    global ang_pub #for publishing on the angle PID topic
   
-    if data.linear.x == 2:
-        telekey = 2 
-        pub1.publish(telekey)
+    if data.linear.x == 2: # forward
+        telekey = 1 # set target pos to 1 ft
+        pos_pub.publish(telekey)
 
-    elif data.linear.x == -2:
-        telekey = -2 
-        pub1.publish(telekey)
+    elif data.linear.x == -2: # backward
+        telekey = -1 # set target pos to -1 ft
+        pos_pub.publish(telekey)
 
-    elif data.linear.z == 2:
-        telekey = 2 
-        pub2.publish(telekey)
+    elif data.angular.z == 2: # left
+        telekey = 90 # set target angle to 90 degrees
+        ang_pub.publish(telekey)
 
-    elif data.linear.z == -2:
-        telekey = -2
-        pub2.publish(telekey)
+    elif data.angular.z == -2: # right
+        telekey = -90 # set target angle to -90 degrees
+        ang_pub.publish(telekey)
 
     """ else:
         telekey = 0
@@ -36,14 +33,15 @@ def callback(data):
         
 
 def translate():
-    global pub1
-    global pub2
+    global pos_pub
+    global ang_pub
 
     rospy.init_node('teleopTranslation', anonymous=True)
-    pub1 = rospy.Publisher('distPID', Int16 , queue_size=10) #creating the topic for the distance PID node
-    pub2 = rospy.Publisher('angularPID', Int16 , queue_size=10) #creating the topic for the angle PID node
-    rospy.Subscriber('/turtle1/cmd_vel', Twist, callback) #subscribing to the cmd_vel topic
-    
+    pos_pub = rospy.Publisher('targetInputDist', Int16, queue_size=10)
+    ang_pub = rospy.Publisher('targetInputAng', Int16, queue_size=10)
+    rospy.Subscriber('PID_cmd_vel', Twist, callback) #subscribing to the cmd_vel topic
+
+    print("teleopTranslate active: control robot via arrow keys with PID")
 
     rospy.spin()        
 

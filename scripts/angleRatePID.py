@@ -44,11 +44,11 @@ def balboa_callback(data):
 
     speed = int(k_p*e + k_d*d + k_i*i) # PID control
 
-    # Cap speed at +/- 3
-    if speed > 3:
-        speed = 3
-    elif speed < -3:
-        speed = -3    
+    # Cap speed at +/- 4
+    if speed > 4:
+        speed = 4
+    elif speed < -4:
+        speed = -4   
         
     vel_msg.left = -speed
     vel_msg.right = speed
@@ -85,18 +85,15 @@ def anglePID():
     if rospy.has_param('~rCtrl/P'):
         k_p = rospy.get_param('~rCtrl/P')
     else:
-        k_p = 0.00005
+        k_p = 0.0001
     if rospy.has_param('~rCtrl/D'):
         k_d = rospy.get_param('~rCtrl/D')
     else:
-        k_d = 0.000000
+        k_d = 0
     if rospy.has_param('~rCtrl/I'):
         k_i = rospy.get_param('~rCtrl/I')
     else:
         k_i = 0
-    print(k_p)
-    print(k_d)
-    print(k_i)
 
     rospy.spin()
 
