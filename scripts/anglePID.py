@@ -3,13 +3,25 @@
 import rospy
 import threading # Needed for Timer
 from geometry_msgs.msg import Twist
-from std_msgs.msg import UInt8
+from std_msgs.msg import Int16
 from balboa_core.msg import balboaLL
 from balboa_core.msg import balboaMotorSpeeds
 
+def callback1(data):
+    global pos_tar 
+    global running
+
+    pos_tar = data.data
+    running = False
+    global n 
+
+    
+    rospy.Subscriber('balboaLL', balboaLL, callback)
+
 def callback(data):
-    k_p = 0.00009
-    k_d = 0.0
+    global k_p 
+    global k_d 
+    global k_i
     global pub
     global running
     global angle_prev
@@ -24,10 +36,10 @@ def callback(data):
     
     if running == False: # Only run if not currently moving towards the target angle
         angle_prev = data.angleX
-        user_in = float(raw_input("Input target angle (deg): "))
+        rospy.loginfo('input recieved: %s', pos_tar)
         #if user_in >= 360: #if the user inputs an angle bigger than 360
             #user_in = user_in - 360
-        pos_tar = (user_in * 1000) # we multiply by 1000 (might be 10000 change if necessary) because the angle is given in millidegrees
+        pos_tar = (pos_tar * 1000) # we multiply by 1000 (might be 10000 change if necessary) because the angle is given in millidegrees
         running = True
         pos_curr = 0
         e_prev = 0
@@ -84,7 +96,30 @@ def anglePID():
     
     pub = rospy.Publisher('motorSpeeds', balboaMotorSpeeds, queue_size=10)
     rospy.init_node('anglePID')
-    rospy.Subscriber('balboaLL', balboaLL, callback)
+
+    rospy.Subscriber('targetInputAng',Int16,callback1)
+    #rospy.Subscriber('targetInput',Int16,callback1)
+
+    global k_p 
+    global k_d 
+    global k_i
+
+    # set PID constants from parameters
+    if rospy.has_param('~rCtrl/P'):
+        k_p = rospy.get_param('~rCtrl/P')
+    else:
+        k_p = 0.00009
+    if rospy.has_param('~rCtrl/D'):
+        k_d = rospy.get_param('~rCtrl/D')
+    else:
+        k_d = 0
+    if rospy.has_param('~rCtrl/I'):
+        k_i = rospy.get_param('~rCtrl/I')
+    else:
+        k_i = 0
+    print(k_p)
+    print(k_d)
+    print(k_i)
 
     if count == 0 :
         running = False

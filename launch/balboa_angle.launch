@@ -1,0 +1,11 @@
+<launch>
+
+  <node pkg="balboa_core" name="balboa_serial" type="balboa_serial.py" output="screen"/>
+  
+  <node pkg="balboa_core" name="anglePID" type="anglePID.py" output="screen">
+    <param name="rCtrl/P" type="double" value="0.00005"/>
+    <param name="rCtrl/I" type="double" value="0.00"/>
+    <param name="rCtrl/D" type="double" value="0.0000"/>
+  </node>
+
+</launch>

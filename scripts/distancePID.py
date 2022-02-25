@@ -8,8 +8,11 @@ from balboa_core.msg import balboaLL
 from balboa_core.msg import balboaMotorSpeeds
 
 def callback(data):
-    k_p = 0.005
-    k_d = -0.0
+    # make these vars global so they persist
+    global k_p
+    global k_d
+    global k_i
+    global i
     global running
     global pos_init
     global pos_tar
@@ -26,6 +29,7 @@ def callback(data):
         pos_init = (data.distanceLeft + data.distanceRight)/2
         e_prev = pos_tar
         t_prev = float(data.header.stamp.secs%1000000)+float(data.header.stamp.nsecs)*10**(-9) # use nsecs and convert to secs to allow fractional seconds
+        i = 0  # reset integral term
         return # wait until next time to start sending signals
     
     pos_cur = (data.distanceLeft + data.distanceRight)/2 - pos_init
@@ -36,7 +40,7 @@ def callback(data):
             t_end = t_cur
             end_flag = True
         elif t_cur - t_end >= 1: # robot has been within 1" of target for 1 sec
-            vel_msg.left = vel_msg.right = int(k_p*e + k_d*d) # PID control
+            vel_msg.left = vel_msg.right = 0
             rospy.loginfo(vel_msg)
             pub.publish(vel_msg)
             running = False
@@ -47,14 +51,15 @@ def callback(data):
     dt = t_cur - t_prev   # time interval since last message
     e = pos_tar - pos_cur # error
     d = (e - e_prev)/dt   # derivative of error
+    i += e*dt # integral of error
 
-    speed = int(k_p*e + k_d*d) # PID control
+    speed = int(k_p*e + k_d*d + k_i*i) # PID control
     # Cap speed at +/- 30
     if speed > 30:
         speed = 30
     elif speed <-30:
         speed = -30
-        
+
     vel_msg.left = vel_msg.right = speed
     rospy.loginfo(vel_msg)
     pub.publish(vel_msg)
@@ -68,6 +73,26 @@ def distancePID():
     pub = rospy.Publisher('motorSpeeds', balboaMotorSpeeds, queue_size=10)
     rospy.init_node('distancePID')
     rospy.Subscriber('balboaLL', balboaLL, callback)
+
+    global k_p
+    global k_d
+    global k_i
+    # set PID constants from parameters
+    if rospy.has_param('~rCtrl/P'):
+        k_p = rospy.get_param('~rCtrl/P')
+    else:
+        k_p = 0.005
+    if rospy.has_param('~rCtrl/D'):
+        k_d = rospy.get_param('~rCtrl/D')
+    else:
+        k_d = 0
+    if rospy.has_param('~rCtrl/I'):
+        k_i = rospy.get_param('~rCtrl/I')
+    else:
+        k_i = 0
+    print(k_p)
+    print(k_d)
+    print(k_i)
  
     global running
     running = False

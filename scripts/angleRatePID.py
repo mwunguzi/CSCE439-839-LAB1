@@ -3,13 +3,26 @@
 import rospy
 import threading # Needed for Timer
 from geometry_msgs.msg import Twist
-from std_msgs.msg import UInt8
+from std_msgs.msg import Int16
 from balboa_core.msg import balboaLL
 from balboa_core.msg import balboaMotorSpeeds
 
+def callback1(data):
+    global pos_tar 
+    global running
+
+    pos_tar = data.data
+    running = False
+    global n 
+
+    
+    rospy.Subscriber('balboaLL', balboaLL, callback)
+
 def callback(data):
-    k_p = 0.00003
-    k_d = 0.00001
+
+    global k_p 
+    global k_d 
+    global k_i
     global pub
     global running
     global angle_prev
@@ -23,15 +36,16 @@ def callback(data):
     global t_cur
     global angular_rate
     global speed
+    
     vel_msg = balboaMotorSpeeds()
     vel_msg.header.stamp = rospy.Time.now()
     
     if running == False: # Only run if not currently moving towards the target angle
         angle_prev = data.angleX
-        user_in = float(raw_input("Input target anglar rate (deg/s): "))
+        rospy.loginfo('input recieved: %s', pos_tar)
         #if user_in >= 360: #if the user inputs an angle bigger than 360
             #user_in = user_in - 360
-        pos_tar = (user_in * 1000) # we multiply by 1000 because the angular rate is given in millidegrees/s
+        pos_tar = (pos_tar * 1000) # we multiply by 1000 because the angular rate is given in millidegrees/s
         running = True
         angular_rate = 0
         e_prev = 0
@@ -106,8 +120,28 @@ def anglePID():
     
     pub = rospy.Publisher('motorSpeeds', balboaMotorSpeeds, queue_size=10)
     rospy.init_node('angleRatePID')
-    rospy.Subscriber('balboaLL', balboaLL, callback)
+    rospy.Subscriber('targetInput',Int16,callback1)
 
+    global k_p 
+    global k_d 
+    global k_i
+
+    # set PID constants from parameters
+    if rospy.has_param('~rCtrl/P'):
+        k_p = rospy.get_param('~rCtrl/P')
+    else:
+        k_p = 0.00003
+    if rospy.has_param('~rCtrl/D'):
+        k_d = rospy.get_param('~rCtrl/D')
+    else:
+        k_d = 0.00001
+    if rospy.has_param('~rCtrl/I'):
+        k_i = rospy.get_param('~rCtrl/I')
+    else:
+        k_i = 0
+    print(k_p)
+    print(k_d)
+    print(k_i)
     if count == 0 :
         running = False
         count+=1
