@@ -1,89 +1,70 @@
 #!/usr/bin/env python
 
 import rospy
-import threading # Needed for Timer
-from geometry_msgs.msg import Twist
-from std_msgs.msg import UInt8
+from std_msgs.msg import Int16
 from balboa_core.msg import balboaLL
 from balboa_core.msg import balboaMotorSpeeds
 
 def callback(data):
+    # make these vars global so they persist
     global k_p 
     global k_d 
     global k_i
+    global i
     global pub
     global running
+    global angle_init
     global angle_prev
     global pos_tar
     global e_prev
-    global e_curr
-    global pos_curr
-    global end_flag
-    global user_in
-    vel_msg = balboaMotorSpeeds()
-    vel_msg.header.stamp = rospy.Time.now()
-    
+    ang_vel = Int16()
+        
     if running == False: # Only run if not currently moving towards the target angle
-        angle_prev = data.angleX
-        user_in = float(raw_input("Input target angle (deg): "))
-        #if user_in >= 360: #if the user inputs an angle bigger than 360
-            #user_in = user_in - 360
-        pos_tar = (user_in * 1000) # we multiply by 1000 (might be 10000 change if necessary) because the angle is given in millidegrees
-        running = True
-        pos_curr = 0
-        e_prev = 0
-        e_curr = 0
-        rospy.loginfo('target angle: %s', pos_tar)
-        rospy.loginfo('angle reading prev: %s', angle_prev)
+        if pos_tar == 0:
+            user_in = float(raw_input("Input target angle (deg): "))
+            pos_tar = (user_in * 1000) # multiply by 1000 because the angle is given in millidegrees
+        else: # this will run only once, the iteration after the target is given
+            running = True
+            angle_init = data.angleX
+            print(pos_tar + angle_init)
+            e_prev = pos_tar
+            angle_prev = 0
+            i = 0  # reset integral term
+        return # wait until next time to start sending signals
 
-    elif running == True:
-        angle_now = data.angleX
-        rospy.loginfo('angle reading now: %s', angle_now)
-        rospy.loginfo('angle reading prev: %s', angle_prev)
-        rospy.loginfo('target angle: %s', pos_tar)
+    angle_now = data.angleX - angle_init # how far the robot has turned
+    rospy.loginfo('angle reading now: %s', angle_now)
 
-        pos_curr = pos_curr + (angle_now - angle_prev)
+    e = pos_tar - angle_now  # proportional error term 
+    d = e - e_prev           # derivative error term
+    i += e                   # integral error term
 
-        angle_prev = angle_now
-        e_prev = e_curr 
-        e_curr = pos_tar-pos_curr
-
-    if e_curr == 0 and e_prev == 0 :
-        e_p = pos_tar # proportional error term 
-        e_d = e_curr - e_prev    # derivative error term
-    else:
-        e_p = pos_tar - pos_curr # proportional error term 
-        e_d = e_curr - e_prev    # derivative error term
-
-    speed = int(k_p*e_p + k_d*e_d) # PID control
-
-    # Cap speed at +/- 8
-    if speed > 4:
-        speed = 4
-    elif speed <-4:
-        speed = -4
+    rospy.loginfo(e)
     
-        
-    vel_msg.left = -speed
-    vel_msg.right = speed
+    angle_prev = angle_now
+    e_prev = e
     
+    ang_vel = k_p*e + k_d*d + k_i*i # PID control
+
+    # Cap speed at +/- 60 degrees/s
+    if ang_vel > 60:
+        ang_vel  = 60
+    elif ang_vel <-60:
+        ang_vel = -60
         
-    rospy.loginfo('current angle: %s', pos_curr)
-    rospy.loginfo('proportionla error term: %s', e_p)
-    rospy.loginfo('speed set: %s',speed)
-    rospy.loginfo(vel_msg)
-    pub.publish(vel_msg)
+    rospy.loginfo('speed set: %s', ang_vel)
+    pub.publish(ang_vel)
     
 
 def anglePID():
     global pub
     global running
-    global count
+    global pos_tar
     
     running = False
-    count = 0
+    pos_tar = 0
     
-    pub = rospy.Publisher('motorSpeeds', balboaMotorSpeeds, queue_size=10)
+    pub = rospy.Publisher('ang_vel', Int16, queue_size=10)
     rospy.init_node('anglePID')
     rospy.Subscriber('balboaLL', balboaLL, callback)
 
@@ -95,7 +76,7 @@ def anglePID():
     if rospy.has_param('~rCtrl/P'):
         k_p = rospy.get_param('~rCtrl/P')
     else:
-        k_p = 0.00009
+        k_p = 0.002
     if rospy.has_param('~rCtrl/D'):
         k_d = rospy.get_param('~rCtrl/D')
     else:
@@ -103,16 +84,10 @@ def anglePID():
     if rospy.has_param('~rCtrl/I'):
         k_i = rospy.get_param('~rCtrl/I')
     else:
-        k_i = 0
+        k_i = 0.000001
     print(k_p)
     print(k_d)
     print(k_i)
-
-    if count == 0 :
-        running = False
-        count+=1
-    elif count > 0 :
-        running = True
 
     rospy.spin()
 

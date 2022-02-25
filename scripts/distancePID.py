@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 
 import rospy
-import threading # Needed for Timer
-from geometry_msgs.msg import Twist
-from std_msgs.msg import UInt8
 from balboa_core.msg import balboaLL
 from balboa_core.msg import balboaMotorSpeeds
 
