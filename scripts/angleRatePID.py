@@ -7,7 +7,7 @@ from balboa_core.msg import balboaMotorSpeeds
 
 def ang_vel_callback(data):
     global angle_rate_tar
-    angle_rate_tar = data.data*1000 #convert from degrees/s to millidegrees/s
+    angle_rate_tar = data.data*1000 # convert from degrees/s to millidegrees/s
 
 def balboa_callback(data):
     # make these vars global so they persist

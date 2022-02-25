@@ -3,11 +3,20 @@
 import rospy
 import threading # Needed for Timer
 from geometry_msgs.msg import Twist
-from std_msgs.msg import UInt8
+from std_msgs.msg import Int16
 from balboa_core.msg import balboaLL
 from balboa_core.msg import balboaMotorSpeeds
 
+def callback1(data):
+    global pos_tar 
+    global running
 
+    pos_tar = data.data * 1572
+    running = False
+    global n 
+
+    
+    rospy.Subscriber('balboaLL', balboaLL, callback)
 
 def callback(data):
     global k_p 
@@ -19,7 +28,10 @@ def callback(data):
     global e_curr
     global running
     global encoder_prev
+    global n
     #global pub
+
+    
 
     vel_msg = balboaMotorSpeeds()
     vel_msg.header.stamp = rospy.Time.now()
@@ -27,7 +39,9 @@ def callback(data):
     rospy.loginfo('Running Flag set to: %s', running)
 
     if running == False: # Only run if not currently moving towards a target
-        pos_tar = float(raw_input("Input target distance (ft): "))*1572 #1572  encoder counts/ft
+                
+        #pos_tar = float(raw_input("Input target distance (ft): "))*1572 # 1572 encoder counts/ft
+        rospy.loginfo('input recieved: %s', pos_tar)
         running = True
         encoder_prev = abs((data.distanceLeft + data.distanceRight)/2)
         pos_curr = 0
@@ -40,37 +54,39 @@ def callback(data):
         rospy.loginfo('encoder reading prev: %s', encoder_prev)
 
         pos_curr += (encoder_now - encoder_prev)
-        
-        
+                
+                
         encoder_prev = encoder_now
         e_prev = e_curr 
         e_curr = pos_tar-pos_curr
+            
+
+        if e_curr == 0 and e_prev == 0 :
+            e_p = pos_tar # proportional error term 
+            e_d = e_curr - e_prev    # derivative error term
+        else:
+            e_p = pos_tar - pos_curr # proportional error term 
+            e_d = e_curr - e_prev    # derivative error term
+
+            speed = int(k_p*e_p + k_d*e_d) # PID control
+
+            # Cap speed at +/- 10 to guard the motor to run at the high speed
+        if speed > 10:
+            speed = 10
+        elif speed <-10:
+            speed = -10
+                
+        vel_msg.left = speed
+        vel_msg.right = speed
+
+            
+        rospy.loginfo('current position: %s', pos_curr)
+        rospy.loginfo('proportionla error term: %s', e_p)
+        rospy.loginfo('speed set: %s',speed)
+        rospy.loginfo(vel_msg)
+        pub.publish(vel_msg)
+
     
-
-    if e_curr == 0 and e_prev == 0 :
-        e_p = pos_tar # proportional error term 
-        e_d = e_curr - e_prev    # derivative error term
-    else:
-        e_p = pos_tar - pos_curr # proportional error term 
-        e_d = e_curr - e_prev    # derivative error term
-
-    speed = int(k_p*e_p + k_d*e_d) # PID control
-
-    # Cap speed at +/- 10 to guard the motor to run at the high speed
-    if speed > 10:
-        speed = 10
-    elif speed <-10:
-        speed = -10
-        
-    vel_msg.left = speed
-    vel_msg.right = speed
-
-    
-    rospy.loginfo('current position: %s', pos_curr)
-    rospy.loginfo('proportionla error term: %s', e_p)
-    rospy.loginfo('speed set: %s',speed)
-    rospy.loginfo(vel_msg)
-    pub.publish(vel_msg)
     
     
 
@@ -85,7 +101,10 @@ def distancePID():
 
     pub = rospy.Publisher('motorSpeeds', balboaMotorSpeeds, queue_size=10)
     rospy.init_node('distancePID')
-    rospy.Subscriber('balboaLL', balboaLL, callback)
+    
+    rospy.Subscriber('targetInputDist',Int16,callback1)
+    #rospy.Subscriber('targetInput',Int16,callback1)
+    
 
     global k_p 
     global k_d 

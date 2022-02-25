@@ -5,6 +5,17 @@ from std_msgs.msg import Int16
 from balboa_core.msg import balboaLL
 from balboa_core.msg import balboaMotorSpeeds
 
+def callback1(data):
+    global pos_tar 
+    global running
+
+    pos_tar = data.data
+    running = False
+    global n 
+
+    
+    rospy.Subscriber('balboaLL', balboaLL, callback)
+
 def callback(data):
     # make these vars global so they persist
     global k_p 
@@ -66,7 +77,9 @@ def anglePID():
     
     pub = rospy.Publisher('ang_vel', Int16, queue_size=10)
     rospy.init_node('anglePID')
-    rospy.Subscriber('balboaLL', balboaLL, callback)
+
+    rospy.Subscriber('targetInputAng',Int16,callback1)
+    #rospy.Subscriber('targetInput',Int16,callback1)
 
     global k_p 
     global k_d 
