@@ -3,9 +3,20 @@
 import rospy
 import threading # Needed for Timer
 from geometry_msgs.msg import Twist
-from std_msgs.msg import UInt8
+from std_msgs.msg import Int16
 from balboa_core.msg import balboaLL
 from balboa_core.msg import balboaMotorSpeeds
+
+def callback1(data):
+    global pos_tar 
+    global running
+
+    pos_tar = data.data
+    running = False
+    global n 
+
+    
+    rospy.Subscriber('balboaLL', balboaLL, callback)
 
 def callback(data):
 
@@ -31,10 +42,10 @@ def callback(data):
     
     if running == False: # Only run if not currently moving towards the target angle
         angle_prev = data.angleX
-        user_in = float(raw_input("Input target anglar rate (deg/s): "))
+        rospy.loginfo('input recieved: %s', pos_tar)
         #if user_in >= 360: #if the user inputs an angle bigger than 360
             #user_in = user_in - 360
-        pos_tar = (user_in * 1000) # we multiply by 1000 because the angular rate is given in millidegrees/s
+        pos_tar = (pos_tar * 1000) # we multiply by 1000 because the angular rate is given in millidegrees/s
         running = True
         angular_rate = 0
         e_prev = 0
@@ -109,7 +120,7 @@ def anglePID():
     
     pub = rospy.Publisher('motorSpeeds', balboaMotorSpeeds, queue_size=10)
     rospy.init_node('angleRatePID')
-    rospy.Subscriber('balboaLL', balboaLL, callback)
+    rospy.Subscriber('targetInput',Int16,callback1)
 
     global k_p 
     global k_d 
