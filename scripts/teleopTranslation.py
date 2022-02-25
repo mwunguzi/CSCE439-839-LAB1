@@ -41,7 +41,7 @@ def translate():
     ang_pub = rospy.Publisher('targetInputAng', Int16, queue_size=10)
     rospy.Subscriber('PID_cmd_vel', Twist, callback) #subscribing to the cmd_vel topic
 
-    print("teleopTranslate active: control robot via arrow keys with PID")
+    print("teleopTranslate active: open turtle_teleop_key to control robot via arrow keys with PID")
 
     rospy.spin()        
 
