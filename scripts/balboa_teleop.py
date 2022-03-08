@@ -23,17 +23,17 @@ def callback(data):
     vel_msg.right = 0
     
     if data.linear.x == 2: # forward
-        vel_msg.left = 20
-        vel_msg.right = 20
+        vel_msg.left = 10
+        vel_msg.right = 10
     elif data.linear.x == -2: # backward
-        vel_msg.left = -20
-        vel_msg.right = -20
+        vel_msg.left = -10
+        vel_msg.right = -10
     if data.angular.z == 2: # left
-        vel_msg.left = 10
-        vel_msg.right = 10
+        vel_msg.left = -5
+        vel_msg.right = 5
     elif data.angular.z == -2: # right
-        vel_msg.left = 10
-        vel_msg.right = 10
+        vel_msg.left = 5
+        vel_msg.right = -5
     
     rospy.loginfo(vel_msg)
     pub.publish(vel_msg)

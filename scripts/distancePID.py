@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 import rospy
-from std_msgs.msg import Int16
+from std_msgs.msg import Float32
+from std_msgs.msg import Bool
 from balboa_core.msg import balboaLL
 from balboa_core.msg import balboaMotorSpeeds
 
@@ -47,16 +48,17 @@ def balboa_callback(data):
     # add nsecs to secs to allow fractional seconds
 
     # need to stop this loop once position is reached, otherwise it interferes with rotating
-    if pos_tar - 196 <= pos_cur and pos_cur <= pos_tar + 196: # within 1.5" of target
+    if pos_tar - 66 <= pos_cur and pos_cur <= pos_tar + 66: # within .5" of target
         if end_flag == False:
             t_end = t_cur
             end_flag = True
-        elif t_cur - t_end >= 2: # robot has been within 1.5" of target for 2 sec
+        elif t_cur - t_end >= 2: # robot has been within .5" of target for 2 sec
             vel_msg.left = vel_msg.right = 0
             rospy.loginfo(vel_msg)
             pub.publish(vel_msg)
             pos_tar = 0
             running = False # stop running this loop until a new target is received
+            goal_pub.publish(True) # publish that position has been reached
             return
     else:
         end_flag = False
@@ -96,9 +98,10 @@ def distancePID():
     pos_tar = 0
 
     pub = rospy.Publisher('motorSpeeds', balboaMotorSpeeds, queue_size=10)
+    goal_pub = rospy.Publisher('posReached', Bool, queue_size=1)
     rospy.init_node('distancePID')
     
-    rospy.Subscriber('targetInputDist',Int16, target_callback)
+    rospy.Subscriber('targetInputDist', Float32, target_callback)
     rospy.Subscriber('balboaLL', balboaLL, balboa_callback)
 
     global k_p 
