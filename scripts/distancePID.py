@@ -26,6 +26,7 @@ def balboa_callback(data):
     global t_prev
     global running
     global pub
+    global goal_pub
     global end_flag
     global t_end
 
@@ -93,6 +94,7 @@ def distancePID():
     global pub
     global running
     global pos_tar
+    global goal_pub
 
     running = False
     pos_tar = 0
