@@ -49,11 +49,11 @@ def balboa_callback(data):
     # add nsecs to secs to allow fractional seconds
 
     # need to stop this loop once position is reached, otherwise it interferes with rotating
-    if pos_tar - 66 <= pos_cur and pos_cur <= pos_tar + 66: # within .5" of target
+    if pos_tar - 131 <= pos_cur and pos_cur <= pos_tar + 131: # within 1" of target
         if end_flag == False:
             t_end = t_cur
             end_flag = True
-        elif t_cur - t_end >= 2: # robot has been within .5" of target for 2 sec
+        elif t_cur - t_end >= 2: # robot has been within 1" of target for 2 sec
             vel_msg.left = vel_msg.right = 0
             rospy.loginfo(vel_msg)
             pub.publish(vel_msg)
@@ -71,11 +71,11 @@ def balboa_callback(data):
 
     speed = int(k_p*e + k_d*d + k_i*i) # PID control
 
-    # Cap speed at +/- 10
-    if speed > 10:
-        speed = 10
-    elif speed <-10:
-        speed = -10
+    # Cap speed at +/- 3
+    if speed > 3:
+        speed = 3
+    elif speed <-3:
+        speed = -3
 
     vel_msg.left = speed
     vel_msg.right = speed
