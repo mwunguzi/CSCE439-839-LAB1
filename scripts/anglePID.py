@@ -56,7 +56,7 @@ def balboa_callback(data):
         if end_flag == False:
             t_end = t_cur
             end_flag = True
-        elif t_cur - t_end >= 2: # robot has been within 2 degrees of target for 2 sec
+        elif t_cur - t_end >= 1: # robot has been within 2 degrees of target for 1 sec
             msg.left = msg.right = 0
             pub.publish(msg) # stop moving
             pos_tar = 0

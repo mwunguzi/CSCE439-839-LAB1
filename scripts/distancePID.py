@@ -72,10 +72,10 @@ def balboa_callback(data):
     speed = int(k_p*e + k_d*d + k_i*i) # PID control
 
     # Cap speed at +/- 3
-    if speed > 3:
-        speed = 3
-    elif speed <-3:
-        speed = -3
+    if speed > 2:
+        speed = 2
+    elif speed <-2:
+        speed = -2
 
     vel_msg.left = speed
     vel_msg.right = speed
